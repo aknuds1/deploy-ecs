@@ -39,6 +39,21 @@ def _tag_image(tag, qualified_image_name, purge):
             ['docker', 'rmi', '{}:{}'.format(qualified_image_name, tag), ])
 
 
+def _stop_tasks(task_family):
+    task_arns = _get_ecs_output(['list-tasks'])['task-arns']
+    tasks = _get_ecs_output(
+        ['describe-tasks', '--tasks', ' '.join(task_arns)])['tasks']
+    re_task = re.compile(
+        r'arn:aws:ecs+:[^:]+:[^:]+:task-definition/{}:\d+'.format(task_family))
+    log_info('Stopping tasks...')
+    for task in [t for t in tasks if re_task.match(t['taskDefinitionArn'])]:
+        log_info('Stopping task \'{}\'...'.format(task['taskArn']))
+        _run_ecs_command(['stop-task', '--task', task['taskArn'], ])
+
+    _run_ecs_command(
+        ['wait', 'tasks-stopped', '--tasks', ' '.join(task_arns), ])
+
+
 def _register_task_definition(task_definition_fpath, purge):
     with open(task_definition_fpath, 'rt') as f:
         task_definition = json.loads(f.read())
@@ -60,6 +75,8 @@ def _register_task_definition(task_definition_fpath, purge):
         _run_ecs_command([
             'deregister-task-definition', '--task-definition',
             existing_task_definition, ])
+
+    _stop_tasks(task_family)
 
     tag = run_command([
         'git', 'rev-parse', '--short', 'HEAD', ], return_stdout=True).strip()
@@ -100,6 +117,9 @@ def _update_service(service_fpath, task_def_name):
             '--task-definition', task_def_name,
             '--desired-count', str(service_config['desiredCount']),
         ])
+
+    _run_ecs_command(
+        ['wait', 'services-stable', '--services', ' '.join(services), ])
 
 
 parser = argparse.ArgumentParser(
