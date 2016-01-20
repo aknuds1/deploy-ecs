@@ -98,7 +98,7 @@ def _update_service(service_fpath, task_def_name):
         _run_ecs_command([
             'update-service', '--service', service,
             '--task-definition', task_def_name,
-            '--desired-count', '2',
+            '--desired-count', service['desiredCount'],
         ])
 
 

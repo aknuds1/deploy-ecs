@@ -12,3 +12,12 @@ This is a collection of scripts for easy deployment to [Amazon ECS](http://docs.
 
 ## Deploy to Staging
 The script `deploy-staging` deploys to your staging server.
+
+It implements the following procedure:
+1. Deregister old task definitions in the task definition family.
+2. Tag Docker images corresponding to containers in the task definition with the Git revision.
+3. Push the Docker image tags to the corresponding registries.
+4. Register new task definition, now referring to Docker images tagged with current Git revisions.
+5. Scale down service to 0 instances, in order to be able to update it.
+6. Update service to use new task definition and scale service back up to the desired number of
+  instances.
