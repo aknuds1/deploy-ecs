@@ -98,17 +98,20 @@ def _update_service(service_fpath, task_def_name):
         ])
 
 
-os.chdir(_root_dir)
-
 parser = argparse.ArgumentParser(
     description="""Deploy latest Docker image to staging server.
 The task definition file is used as the task definition, whereas
 the service file is used to configure the service.
 """)
 parser.add_argument(
-    'task-definition-file', help='Your task definition JSON file')
-parser.add_argument('service-file', help='Your service JSON file')
+    'task_definition_file', help='Your task definition JSON file')
+parser.add_argument('service_file', help='Your service JSON file')
 args = parser.parse_args()
 
-task_def_name = _register_task_definition(args.task_definition_file)
-_update_service(args.service_file, task_def_name)
+task_definition_file = os.path.abspath(args.task_definition_file)
+service_file = os.path.abspath(args.service_file)
+
+os.chdir(_root_dir)
+
+task_def_name = _register_task_definition(task_definition_file)
+_update_service(service_file, task_def_name)
