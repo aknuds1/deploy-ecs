@@ -40,7 +40,7 @@ def _tag_image(tag, qualified_image_name, purge):
 
 
 def _stop_tasks(task_family):
-    task_arns = _get_ecs_output(['list-tasks'])['task-arns']
+    task_arns = _get_ecs_output(['list-tasks'])['taskArns']
     tasks = _get_ecs_output(
         ['describe-tasks', '--tasks', ' '.join(task_arns)])['tasks']
     re_task = re.compile(
@@ -117,9 +117,6 @@ def _update_service(service_fpath, task_def_name):
             '--task-definition', task_def_name,
             '--desired-count', str(service_config['desiredCount']),
         ])
-
-    _run_ecs_command(
-        ['wait', 'services-stable', '--services', ' '.join(services), ])
 
 
 parser = argparse.ArgumentParser(
