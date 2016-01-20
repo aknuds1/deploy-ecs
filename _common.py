@@ -15,13 +15,18 @@ def handle_error(msg):
     sys.exit(1)
 
 
-def run_command(command, ignore_error=False, return_stdout=False):
+def run_command(
+        command, ignore_error=False, return_stdout=False, capture_stdout=True):
     if not isinstance(command, (list, tuple)):
         command = [command, ]
     command_str = ' '.join(command)
     log_info('Running command {}'.format(command_str))
     try:
-        stdout = subprocess.check_output(command)
+        if capture_stdout:
+            stdout = subprocess.check_output(command)
+        else:
+            subprocess.check_call(command)
+            stdout = None
     except subprocess.CalledProcessError as err:
         if not ignore_error:
             handle_error('Command failed: {}'.format(err))

@@ -24,15 +24,18 @@ def _tag_image(tag, qualified_image_name):
     log_info('Tagging image \'{}\' as \'{}\'...'.format(
         qualified_image_name, tag))
     log_info('Pulling image from registry in order to tag...')
-    run_command(['docker', 'pull', qualified_image_name])
+    run_command(
+        ['docker', 'pull', qualified_image_name], capture_stdout=False)
     run_command(['docker', 'tag', '-f', qualified_image_name, '{}:{}'.format(
         qualified_image_name, tag), ])
     log_info('Pushing image tag to registry...')
     run_command(['docker', 'push', '{}:{}'.format(
-        qualified_image_name, tag), ])
+        qualified_image_name, tag), ], capture_stdout=False)
     log_info('Deleting pulled image...')
-    run_command(['docker', 'rmi', '{}:latest'.format(qualified_image_name), ])
-    run_command(['docker', 'rmi', '{}:{}'.format(qualified_image_name, tag), ])
+    run_command(
+        ['docker', 'rmi', '{}:latest'.format(qualified_image_name), ])
+    run_command(
+        ['docker', 'rmi', '{}:{}'.format(qualified_image_name, tag), ])
 
 
 def _register_task_definition(task_definition_fpath):
