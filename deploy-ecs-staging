@@ -60,6 +60,13 @@ def _register_task_definition(task_definition_fpath, purge):
 
     task_family = task_definition['family']
 
+    tag = run_command([
+        'git', 'rev-parse', '--short', 'HEAD', ], return_stdout=True).strip()
+    for container_def in task_definition['containerDefinitions']:
+        image_name = container_def['image']
+        _tag_image(tag, image_name, purge)
+        container_def['image'] = '{}:{}'.format(image_name, tag)
+
     log_info('Finding existing task definitions of family \'{}\'...'.format(
         task_family
     ))
@@ -76,46 +83,14 @@ def _register_task_definition(task_definition_fpath, purge):
             'deregister-task-definition', '--task-definition',
             existing_task_definition, ])
 
-    _stop_tasks(task_family)
-
-    tag = run_command([
-        'git', 'rev-parse', '--short', 'HEAD', ], return_stdout=True).strip()
-    for container_def in task_definition['containerDefinitions']:
-        image_name = container_def['image']
-        _tag_image(tag, image_name, purge)
-        container_def['image'] = '{}:{}'.format(image_name, tag)
-
     with tempfile.NamedTemporaryFile(mode='wt', suffix='.json') as f:
         task_def_str = json.dumps(task_definition)
         f.write(task_def_str)
         f.flush()
         log_info('Registering task definition...')
-        result = _get_ecs_output([
+        _run_ecs_command([
             'register-task-definition',
             '--cli-input-json', 'file://{}'.format(f.name),
-        ])
-
-    return '{}:{}'.format(task_family, result['taskDefinition']['revision'])
-
-
-def _update_service(service_fpath, task_def_name):
-    with open(service_fpath, 'rt') as f:
-        service_config = json.loads(f.read())
-    services = _get_ecs_output(['list-services', ])[
-        'serviceArns']
-    for service in [s for s in services if re.match(
-        r'arn:aws:ecs:[^:]+:[^:]+:service/{}'.format(
-            service_config['serviceName']),
-        s
-    )]:
-        log_info('Scaling down service \'{}\'...'.format(service))
-        _run_ecs_command([
-            'update-service', '--service', service, '--desired-count', '0', ])
-        log_info('Scaling service back up...')
-        _run_ecs_command([
-            'update-service', '--service', service,
-            '--task-definition', task_def_name,
-            '--desired-count', str(service_config['desiredCount']),
         ])
 
 
@@ -137,6 +112,5 @@ service_file = os.path.abspath(args.service_file)
 
 os.chdir(_root_dir)
 
-task_def_name = _register_task_definition(
+_register_task_definition(
     task_definition_file, args.purge_image)
-_update_service(service_file, task_def_name)
