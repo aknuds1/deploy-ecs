@@ -20,5 +20,4 @@ It implements the following procedure:
 2. Push the Docker image tags to the corresponding registries.
 3. Deregister old task definitions in the task definition family.
 4. Register new task definition, now referring to Docker images tagged with current Git revisions.
-5. Update service to use new task definition and scale service back up to the desired number of
-  instances.
+5. Update service to use new task definition.

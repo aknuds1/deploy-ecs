@@ -88,9 +88,28 @@ def _register_task_definition(task_definition_fpath, purge):
         f.write(task_def_str)
         f.flush()
         log_info('Registering task definition...')
-        _run_ecs_command([
+        result = _get_ecs_output([
             'register-task-definition',
             '--cli-input-json', 'file://{}'.format(f.name),
+        ])
+
+    return '{}:{}'.format(task_family, result['taskDefinition']['revision'])
+
+
+def _update_service(service_fpath, task_def_name):
+    with open(service_fpath, 'rt') as f:
+        service_config = json.loads(f.read())
+    services = _get_ecs_output(['list-services', ])[
+        'serviceArns']
+    for service in [s for s in services if re.match(
+        r'arn:aws:ecs:[^:]+:[^:]+:service/{}'.format(
+            service_config['serviceName']),
+        s
+    )]:
+        log_info('Updating service with new task definition...')
+        _run_ecs_command([
+            'update-service', '--service', service,
+            '--task-definition', task_def_name,
         ])
 
 
@@ -112,5 +131,6 @@ service_file = os.path.abspath(args.service_file)
 
 os.chdir(_root_dir)
 
-_register_task_definition(
+task_def_name = _register_task_definition(
     task_definition_file, args.purge_image)
+_update_service(service_file, task_def_name)
