@@ -16,10 +16,10 @@ themselves against your Docker image registry in case it is private, by adding t
 
 ## Deploy to ECS
 The script `deploy-ecs` deploys to your default ECS cluster. You will need task definition and
-service JSON files. For this to work, you need to either have an idle ECS instance or ensure that
-the service's deployment configuration specifies a `minimumHealthyPercent` of less than 100, so that
-ECS always has an extra node to deploy the new task definition to. Then ECS will update every node
-one after the other, so that downtime is avoided.
+service JSON files. For this to work, you should have an elastic load balancer and an idle ECS
+instance or ensure that the service's deployment configuration specifies a `minimumHealthyPercent`
+of less than 100, so that ECS always has an extra node to deploy the new task definition to.
+Then ECS will update every node one after the other, so that downtime is avoided.
 
 The script implements the following procedure:
 
