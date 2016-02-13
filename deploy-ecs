@@ -50,8 +50,7 @@ def _get_task_definition(task_definition_fpath):
         _tag_image(tag, image_name, purge)
         container_def['image'] = '{}:{}'.format(image_name, tag)
         for env_var_def in [
-            evdf in container_def.get('environment', []) if not evdf.get(
-                'value')
+            evdf for evdf in container_def.get('environment', []) if not evdf.get('value')
         ]:
             env_var_value = os.environ[env_var_def['name']]
             print('Setting environment value of {}: {} = {}'.format(
